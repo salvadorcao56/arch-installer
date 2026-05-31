@@ -2,6 +2,18 @@
 # FILE: modules/disk.sh
 # =========================
 
+to_mib() {
+    local val=$1
+    val=$(echo "$val" | tr '[:lower:]' '[:upper:]')
+    if [[ $val == *G ]]; then
+        echo $((${val%G} * 1024))
+    elif [[ $val == *M ]]; then
+        echo ${val%M}
+    else
+        echo $((val))
+    fi
+}
+
 setup_disk() {
     lsblk -d -o NAME,SIZE,MODEL | grep -v "^loop"
     DISK=$(whiptail --inputbox "Disco a instalar (ej: sda, nvme0n1):" 10 60 3>&1 1>&2 2>&3)
@@ -9,55 +21,67 @@ setup_disk() {
 
     DISK_PATH="/dev/$DISK"
     PART_PREFIX=""
-    [[ "$DISK" == nvme* ]] && PART_PREFIX="p"
+    [[ "$DISK" == nvme* || "$DISK" == mmcblk* ]] && PART_PREFIX="p"
 
     USE_LUKS=$(whiptail --yesno "¿Usar cifrado LUKS?" 8 60 3>&1 1>&2 2>&3 && echo yes || echo no)
-
     FS_CHOICE=$(whiptail --menu "Sistema de archivos:" 10 60 2 \
         "btrfs" "Btrfs (recomendado)" \
         "ext4"  "Ext4" 3>&1 1>&2 2>&3)
+    CUSTOM_PART=$(whiptail --yesno "¿Particionado manual? (NO = todo el disco para /)" 8 60 3>&1 1>&2 2>&3 && echo yes || echo no)
 
-    CUSTOM_PART=$(whiptail --yesno "¿Particionado manual? (NO = auto: todo a root)" 8 60 3>&1 1>&2 2>&3 && echo yes || echo no)
+    DISK_END=$(parted "$DISK_PATH" unit MiB print 2>/dev/null | awk '/^[0-9]/ && /^Disk/ {print $3}' | sed 's/MiB//')
+    if [[ -z "$DISK_END" ]]; then
+        DISK_END=$(parted "$DISK_PATH" unit MiB print 2>/dev/null | grep "Disk $DISK_PATH" | awk '{print $3}' | sed 's/MiB//')
+    fi
 
     parted "$DISK_PATH" --script mklabel gpt
     parted "$DISK_PATH" --script mkpart ESP fat32 1MiB 513MiB
     parted "$DISK_PATH" --script set 1 esp on
     EFI="${DISK_PATH}${PART_PREFIX}1"
 
-    if [[ "$CUSTOM_PART" == "yes" ]]; then
-        ROOT_SIZE=$(whiptail --inputbox "Tamaño partición ROOT (ej: 40G, o vacío para usar resto):" 10 60 3>&1 1>&2 2>&3)
-        SWAP_SIZE=$(whiptail --inputbox "Tamaño SWAP (ej: 4G, o vacío para no crear swap):" 10 60 3>&1 1>&2 2>&3)
-        HOME_SIZE=$(whiptail --inputbox "Tamaño partición HOME (ej: 100G, o vacío para usar resto):" 10 60 3>&1 1>&2 2>&3)
+    local START=513
+    local PART_NUM=2
 
-        local next_start="513MiB"
+    if [[ "$CUSTOM_PART" == "yes" ]]; then
+        ROOT_SIZE=$(whiptail --inputbox "Tamaño partición ROOT (ej: 40G, o vacío = resto del disco):" 10 60 3>&1 1>&2 2>&3)
+        SWAP_SIZE=$(whiptail --inputbox "Tamaño SWAP (ej: 4G, o vacío = sin swap):" 10 60 3>&1 1>&2 2>&3)
+        HOME_SIZE=$(whiptail --inputbox "Tamaño HOME (ej: 100G, o vacío = resto del disco):" 10 60 3>&1 1>&2 2>&3)
 
         if [[ -n "$ROOT_SIZE" ]]; then
-            parted "$DISK_PATH" --script mkpart primary "$next_start" "$ROOT_SIZE"
-            ROOT_PART="${DISK_PATH}${PART_PREFIX}2"
-            next_start="$ROOT_SIZE"
+            local R_MIB=$(to_mib "$ROOT_SIZE")
+            local END=$((START + R_MIB))
+            parted "$DISK_PATH" --script mkpart primary ${START}MiB ${END}MiB
+            ROOT_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
+            START=$END
+            ((PART_NUM++))
         else
-            parted "$DISK_PATH" --script mkpart primary "$next_start" 100%
-            ROOT_PART="${DISK_PATH}${PART_PREFIX}2"
+            parted "$DISK_PATH" --script mkpart primary ${START}MiB 100%
+            ROOT_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
+            ((PART_NUM++))
+            HOME_SIZE=""
+            SWAP_SIZE=""
         fi
 
-        if [[ -n "$SWAP_SIZE" ]]; then
-            parted "$DISK_PATH" --script mkpart primary linux-swap "$next_start" "$SWAP_SIZE"
-            SWAP_PART="${DISK_PATH}${PART_PREFIX}3"
-            next_start="$SWAP_SIZE"
+        if [[ -n "$SWAP_SIZE" && -n "$ROOT_SIZE" ]]; then
+            local S_MIB=$(to_mib "$SWAP_SIZE")
+            local END=$((START + S_MIB))
+            parted "$DISK_PATH" --script mkpart primary linux-swap ${START}MiB ${END}MiB
+            SWAP_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
+            START=$END
+            ((PART_NUM++))
         fi
 
-        if [[ -n "$HOME_SIZE" ]]; then
-            if [[ -z "$ROOT_SIZE" ]]; then
-                HOME_SIZE=""
-                whiptail --msgbox "No hay espacio para /home si root usa todo el disco" 8 60
-            else
-                parted "$DISK_PATH" --script mkpart primary "$next_start" "$HOME_SIZE"
-                HOME_PART="${DISK_PATH}${PART_PREFIX}4"
-            fi
+        if [[ -n "$HOME_SIZE" && -n "$ROOT_SIZE" ]]; then
+            local H_MIB=$(to_mib "$HOME_SIZE")
+            local END=$((START + H_MIB))
+            parted "$DISK_PATH" --script mkpart primary ${START}MiB ${END}MiB
+            HOME_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
+            START=$END
+            ((PART_NUM++))
         fi
     else
-        parted "$DISK_PATH" --script mkpart primary 513MiB 100%
-        ROOT_PART="${DISK_PATH}${PART_PREFIX}2"
+        parted "$DISK_PATH" --script mkpart primary ${START}MiB 100%
+        ROOT_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
     fi
 
     mkfs.fat -F32 "$EFI"
@@ -98,8 +122,8 @@ setup_disk() {
         fi
     fi
 
-    mkdir -p /mnt/boot
-    mount "$EFI" /mnt/boot
+    mkdir -p /mnt/boot/efi
+    mount "$EFI" /mnt/boot/efi
 
-    whiptail --msgbox "Particionado completado correctamente" 8 60
+    whiptail --msgbox "Particionado completado" 8 60
 }

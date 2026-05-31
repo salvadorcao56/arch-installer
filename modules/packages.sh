@@ -19,11 +19,9 @@ select_packages() {
         "docker"           "Contenedores" OFF \
         "flatpak"          "Gestor de paquetes Flatpak" OFF \
         "steam"            "Plataforma de juegos" OFF \
-        "spotify"           "Música en streaming" OFF \
-        "keepassxc"         "Gestor de contraseñas" OFF \
-        "filezilla"         "Cliente FTP" OFF \
-        "obs-studio"        "Grabación/streaming" OFF \
-        "virt-manager"      "Máquinas virtuales" OFF \
+        "keepassxc"        "Gestor de contraseñas" OFF \
+        "obs-studio"       "Grabación/streaming" OFF \
+        "virt-manager"     "Máquinas virtuales" OFF \
         3>&1 1>&2 2>&3)
 
     if [[ -n "$PACKAGES" ]]; then
@@ -33,12 +31,14 @@ select_packages() {
 }
 
 install_yay() {
-    arch-chroot /mnt /bin/bash <<'EOF'
+    local USER=$(cat /tmp/username)
+arch-chroot /mnt /bin/bash <<EOF
 pacman -S --needed base-devel git --noconfirm
-cd /tmp
-git clone https://aur.archlinux.org/yay-bin.git
-cd yay-bin
-makepkg -si --noconfirm
+useradd -m tempbuild 2>/dev/null || true
+echo "tempbuild ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+su - tempbuild -c "cd /tmp && git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --noconfirm"
+sed -i '/^tempbuild/d' /etc/sudoers
+userdel -r tempbuild 2>/dev/null || true
 EOF
 }
 
@@ -52,13 +52,12 @@ install_aur_packages() {
         "google-chrome"     "Google Chrome" OFF \
         "visual-studio-code-bin" "VS Code (AUR)" OFF \
         "discord"           "Discord" OFF \
-        "spotify"           "Spotify (AUR)" OFF \
         "anydesk-bin"       "AnyDesk" OFF \
-        "teamviewer"        "TeamViewer" OFF \
         3>&1 1>&2 2>&3)
 
     if [[ -n "$AUR_PACKAGES" ]]; then
         AUR_SELECTED=$(echo "$AUR_PACKAGES" | sed 's/"//g')
-        arch-chroot /mnt sudo -u $(cat /tmp/username) yay -S $AUR_SELECTED --noconfirm
+        local USER=$(cat /tmp/username)
+        arch-chroot /mnt sudo -u "$USER" yay -S $AUR_SELECTED --noconfirm
     fi
 }

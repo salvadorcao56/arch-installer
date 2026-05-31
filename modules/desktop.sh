@@ -15,9 +15,9 @@ install_desktop() {
             arch-chroot /mnt pacman -S i3-wm i3status i3lock dmenu picom feh alacritty --noconfirm
             arch-chroot /mnt pacman -S lightdm lightdm-gtk-greeter --noconfirm
             arch-chroot /mnt systemctl enable lightdm
-            mkdir -p /mnt/home/$(cat /tmp/username)/.config/i3
-            cat > /mnt/home/$(cat /tmp/username)/.config/i3/config <<'I3CONF'
-# i3 config
+            local USER=$(cat /tmp/username)
+            mkdir -p /mnt/home/$USER/.config/i3
+            cat > /mnt/home/$USER/.config/i3/config <<'I3CONF'
 set $mod Mod4
 font pango:monospace 10
 bindsym $mod+Return exec alacritty
@@ -26,20 +26,21 @@ bindsym $mod+Shift+q kill
 bindsym $mod+1 workspace 1
 bindsym $mod+Shift+1 move container to workspace 1
 exec_always picom -f
-exec_always feh --bg-scale /usr/share/backgrounds/default.png
 I3CONF
+            arch-chroot /mnt chown -R $USER:$USER /home/$USER
             ;;
         hyprland)
             arch-chroot /mnt pacman -S hyprland waybar alacritty wofi dunst --noconfirm
-            arch-chroot /mnt systemctl enable NetworkManager
-            mkdir -p /mnt/home/$(cat /tmp/username)/.config/hypr
-            cat > /mnt/home/$(cat /tmp/username)/.config/hypr/hyprland.conf <<'HYPR'
+            local USER=$(cat /tmp/username)
+            mkdir -p /mnt/home/$USER/.config/hypr
+            cat > /mnt/home/$USER/.config/hypr/hyprland.conf <<'HYPR'
 monitor=,preferred,auto,1
 exec-once=waybar & dunst
 bind=SUPER,RETURN,exec,alacritty
 bind=SUPER,D,exec,wofi --show drun
 bind=SUPER,Q,killactive,
 HYPR
+            arch-chroot /mnt chown -R $USER:$USER /home/$USER
             ;;
         xfce)
             arch-chroot /mnt pacman -S xfce4 xfce4-goodies lightdm lightdm-gtk-greeter --noconfirm
