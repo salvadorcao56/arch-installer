@@ -228,6 +228,8 @@ def hacker():
         chroot('pacman','-S','nmap','wireshark-qt','--noconfirm')
 
 def main():
+    import signal
+    signal.signal(signal.SIGINT, lambda s,f: sys.exit(1))
     os.environ.setdefault('TERM','xterm-256color')
     steps = [
         ("WiFi", connect_wifi), ("Particionado", setup_disk), ("Base", install_base),
