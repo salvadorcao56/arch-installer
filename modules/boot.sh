@@ -13,6 +13,6 @@ sed -i 's/#GRUB_ENABLE_CRYPTODISK=y/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub
 EOF
     fi
 
-    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable
+    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable || echo "[!] grub-install dio warning, continuando..."
     arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg || true
 }
