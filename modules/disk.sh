@@ -160,7 +160,7 @@ Ej: 100G, o vacío = resto del disco:" 11 65 3>&1 1>&2 2>&3)
 
     if [[ "$USE_LUKS" == "yes" ]]; then
         LUKS_PASSWORD=$(whiptail --inputbox "Contraseña para LUKS (visible):" 8 60 3>&1 1>&2 2>&3)
-        echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat "$ROOT_PART" -
+        echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat --type luks1 "$ROOT_PART" -
         echo -n "$LUKS_PASSWORD" | cryptsetup open "$ROOT_PART" cryptroot -
         ROOT_DEV="/dev/mapper/cryptroot"
         CRYPT_UUID=$(blkid -s UUID -o value "$ROOT_PART")

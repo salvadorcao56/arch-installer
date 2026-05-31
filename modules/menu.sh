@@ -24,12 +24,13 @@ run_install() {
     configure_system
     configure_initramfs
     create_user
+    install_bootloader
+    configure_snapshots
+    install_yay
     install_desktop
     install_dotfiles
     select_packages
     install_aur_packages
     install_hacker_tools
-    configure_snapshots
-    install_bootloader
     whiptail --msgbox "Instalación completada. Reinicia con 'reboot'" 10 60
 }

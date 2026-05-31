@@ -13,14 +13,15 @@ Instalador semi-automatico de Arch Linux desde la ISO. Menu interactivo con whip
 3. install_base_system -> pacstrap base + genfstab
 4. configure_system   -> hostname, zona horaria, locale, teclado, NetworkManager
 5. configure_initramfs -> hooks de mkinitcpio (con encrypt si LUKS)
-6. create_user        -> usuario+password visible, grupo wheel+sudo, password root
-7. install_desktop    -> i3 / hyprland / xfce / kde / none
-8. install_dotfiles   -> copia configs/ (i3, i3blocks, zsh, nvim, vim, ranger, ghostty, thunar, yazi, nanorc, ideavimrc)
-9. select_packages    -> checklist de paquetes oficiales
-10. install_aur_packages -> compila yay, checklist de AUR
-11. install_hacker_tools -> nmap, wireshark-qt
-12. configure_snapshots  -> snapper, snapshot inicial "Sistema recien instalado"
-13. install_bootloader   -> GRUB EFI, con soporte LUKS
+6. create_user        -> usuario+password visible, grupo wheel+sudo (NOPASSWD), password root
+7. install_bootloader   -> GRUB EFI, con soporte LUKS
+8. configure_snapshots  -> snapper, snapshot inicial "Sistema recien instalado"
+9. install_yay          -> compila yay (helper AUR) con usuario temporal tempbuild
+10. install_desktop    -> i3 / hyprland / xfce / kde / none
+11. install_dotfiles   -> copia configs/ (i3, i3blocks, zsh, nvim, vim, ranger, ghostty, thunar, yazi, nanorc, ideavimrc)
+12. select_packages    -> checklist de paquetes oficiales
+13. install_aur_packages -> yay -S desde checklist AUR (sin reinstalar yay)
+14. install_hacker_tools -> nmap, wireshark-qt
 
 ## Modulos
 - log.sh        -> logging a install.log
@@ -82,3 +83,5 @@ arch-installer/
 - Las contraseñas son visibles (--inputbox), no ocultas
 - ES_LANG: es_ES.UTF-8, KEYMAP=es
 - Uso de set -e en install.sh
+- sudoers: `%wheel ALL=(ALL) NOPASSWD: ALL` para que yay pueda ejecutar pacman sin contraseña
+- Snapshots (snapper) se crean ANTES de instalar apps, y yay se instala como paso independiente antes que los paquetes AUR

@@ -13,12 +13,15 @@ create_user() {
     [[ -z "$ROOT_PASSWORD" ]] && ROOT_PASSWORD="$PASSWORD"
 
     echo "$USERNAME" > /tmp/username
+    echo "$USERNAME" > /mnt/tmp/username
 
 arch-chroot /mnt /bin/bash <<EOF
 useradd -m -G wheel,sudo -s /bin/zsh $USERNAME
 echo "$USERNAME:$PASSWORD" | chpasswd
 echo "root:$ROOT_PASSWORD" | chpasswd
-sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
+sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) NOPASSWD: ALL/' /etc/sudoers
+chmod 0440 /etc/sudoers
+chown root:root /etc/sudoers
 EOF
 
     whiptail --msgbox "Usuario $USERNAME creado correctamente" 8 60
