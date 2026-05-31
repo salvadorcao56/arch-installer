@@ -54,13 +54,21 @@ Escribe el nombre del disco donde instalar (ej: sda):" 18 70 "$DEFAULT_DISK" 3>&
     local PART_NUM=2
 
     if [[ "$CUSTOM_PART" == "yes" ]]; then
-        local FREE=$((DISK_END - START))
-        local FREE_G=$((FREE / 1024))
+        while true; do
+            local FREE=$((DISK_END - START))
+            local FREE_G=$((FREE / 1024))
 
-        ROOT_SIZE=$(whiptail --inputbox "Tamaño ROOT — Quedan ${FREE_G}G libres
+            ROOT_SIZE=$(whiptail --inputbox "Tamaño ROOT — Quedan ${FREE_G}G libres
 Ej: 40G, o vacío = resto del disco:" 11 65 3>&1 1>&2 2>&3)
 
-        if [[ -n "$ROOT_SIZE" ]]; then
+            if [[ -z "$ROOT_SIZE" ]]; then
+                parted -s "$DISK_PATH" mkpart primary ${START}MiB 100%
+                ROOT_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
+                HOME_SIZE=""
+                SWAP_SIZE=""
+                break
+            fi
+
             local R_MIB=$(to_mib "$ROOT_SIZE")
             local FREE=$((FREE - R_MIB))
             local FREE_G=$((FREE / 1024))
@@ -84,21 +92,34 @@ Ej: 100G, o vacío = resto del disco:" 11 65 3>&1 1>&2 2>&3)
                 FREE=$((FREE - H_MIB))
             fi
 
-            local END=$((START + R_MIB))
+            local END_ROOT=$((START + R_MIB))
+            local END_SWAP=$((END_ROOT + S_MIB))
+            local END_HOME=$((END_SWAP + H_MIB))
 
             SUMMARY="Particiones a crear en $DISK_PATH:\n\n"
             SUMMARY+="  ESP:   1MiB - 513MiB\n"
-            SUMMARY+="  ROOT:  513MiB - ${END}MiB (${ROOT_SIZE}B)\n"
+            SUMMARY+="  ROOT:  513MiB - ${END_ROOT}MiB (${ROOT_SIZE}B)\n"
             if [[ -n "$SWAP_SIZE" ]]; then
-                SUMMARY+="  SWAP:  ${END}MiB - $((END + S_MIB))MiB (${SWAP_SIZE}B)\n"
+                SUMMARY+="  SWAP:  ${END_ROOT}MiB - ${END_SWAP}MiB (${SWAP_SIZE}B)\n"
             fi
             if [[ -n "$HOME_SIZE" ]]; then
-                SUMMARY+="  HOME:  $((END + S_MIB))MiB - $((END + S_MIB + H_MIB))MiB (${HOME_SIZE}B)\n"
+                SUMMARY+="  HOME:  ${END_SWAP}MiB - ${END_HOME}MiB (${HOME_SIZE}B)\n"
+            else
+                HOME_LABEL="resto del disco"
+                SUMMARY+="  HOME:  ${END_SWAP}MiB - ${DISK_END}MiB (${HOME_LABEL})\n"
             fi
             SUMMARY+="\n¿Continuar? Se borrará TODO el contenido del disco"
 
-            whiptail --yesno "$SUMMARY" 18 70 3>&1 1>&2 2>&3 || exit 1
+            whiptail --yesno "$SUMMARY" 18 70 3>&1 1>&2 2>&3
+            if [[ $? -ne 0 ]]; then
+                whiptail --msgbox "Vuelve a definir las particiones" 8 40
+                continue
+            fi
+            break
+        done
 
+        if [[ -n "$ROOT_SIZE" ]]; then
+            local END=$((START + R_MIB))
             parted -s "$DISK_PATH" mkpart primary ${START}MiB ${END}MiB
             ROOT_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
             START=$END
@@ -118,21 +139,11 @@ Ej: 100G, o vacío = resto del disco:" 11 65 3>&1 1>&2 2>&3)
                 HOME_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
                 START=$END
                 ((PART_NUM++))
+            else
+                parted -s "$DISK_PATH" mkpart primary ${START}MiB 100%
+                HOME_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
+                ((PART_NUM++))
             fi
-
-            if [[ $FREE -gt 100 ]]; then
-                whiptail --yesno "Quedan $((FREE / 1024))G sin particionar. ¿Asignarlos al final del disco?" 10 60
-                if [[ $? -eq 0 ]]; then
-                    parted -s "$DISK_PATH" mkpart primary ${START}MiB 100%
-                    HOME_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
-                    ((PART_NUM++))
-                fi
-            fi
-        else
-            parted -s "$DISK_PATH" mkpart primary ${START}MiB 100%
-            ROOT_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
-            HOME_SIZE=""
-            SWAP_SIZE=""
         fi
     else
         parted -s "$DISK_PATH" mkpart primary ${START}MiB 100%
