@@ -3,14 +3,14 @@
 # =========================
 
 select_packages() {
-    PACKAGES=$(whiptail --checklist "Selecciona paquetes a instalar (ESPACIO para marcar):" 20 70 12 \
+    PACKAGES=$(whiptail --checklist "Selecciona paquetes a instalar (ESPACIO para marcar):" 20 70 14 \
         "firefox"          "Navegador web" OFF \
         "chromium"         "Navegador web" OFF \
         "thunderbird"      "Cliente de correo" OFF \
         "vlc"              "Reproductor multimedia" OFF \
         "gimp"             "Editor de imágenes" OFF \
         "libreoffice"      "Suite ofimática" OFF \
-        "code"             "Visual Studio Code" OFF \
+        "code"             "Visual Studio Code (OSS)" OFF \
         "neovim"           "Editor de texto avanzado" OFF \
         "tmux"             "Terminal multiplexer" OFF \
         "htop"             "Monitor de procesos" OFF \
@@ -31,7 +31,6 @@ select_packages() {
 }
 
 install_yay() {
-    local USER=$(cat /tmp/username)
 arch-chroot /mnt /bin/bash <<EOF
 pacman -S --needed base-devel git --noconfirm
 useradd -m tempbuild 2>/dev/null || true
@@ -50,9 +49,13 @@ install_aur_packages() {
 
     AUR_PACKAGES=$(whiptail --checklist "Selecciona paquetes AUR (yay):" 20 70 8 \
         "google-chrome"     "Google Chrome" OFF \
-        "visual-studio-code-bin" "VS Code (AUR)" OFF \
+        "visual-studio-code-bin" "VS Code (Microsoft)" OFF \
         "discord"           "Discord" OFF \
+        "spotify"           "Spotify" OFF \
         "anydesk-bin"       "AnyDesk" OFF \
+        "burpsuite"         "Burp Suite" OFF \
+        "metasploit"        "Metasploit" OFF \
+        "obsidian"          "Obsidian notas" OFF \
         3>&1 1>&2 2>&3)
 
     if [[ -n "$AUR_PACKAGES" ]]; then
