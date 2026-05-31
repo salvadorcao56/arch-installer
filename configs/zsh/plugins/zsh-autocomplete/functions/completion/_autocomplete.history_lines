@@ -1,0 +1,128 @@
+#autoload
+
+_autocomplete.history_lines() {
+
+  # Don't run more than once.
+  [[ $_matcher_num -eq 1  ]] ||
+      return
+
+  local -P lbuffer='' rbuffer=''
+  [[ $CURRENT -gt 1 ]] &&
+      lbuffer="${(j.[[:blank:]]##.)${(@b)words[1,CURRENT-1]}}[[:blank:]]##"
+  [[ $CURRENT -lt $#words[@] ]] &&
+      rbuffer="[[:blank:]]##${(j.[[:blank:]]##.)${(@b)words[CURRENT+1,-1]}}"
+  lbuffer="$lbuffer${(b)QIPREFIX}"
+  rbuffer="${(b)QISUFFIX}$rbuffer"
+
+  local -P query='' pre='' post=''
+  if [[ -z $words[CURRENT] ]]; then
+    query='*'
+  else
+    local -Pa includes=( "${(@s..b)^words[CURRENT]}" )
+    local -Pa excludes=( "(|[^${(@s..b)^words[CURRENT]}\n;]#)" )
+    local -Pa tokens=( ${(@)excludes:^includes} )
+    query="((#l)$tokens[2]${(j..)tokens[3,-1]})"
+
+    local -P no_delim='[^\n;]#'
+    if [[ -z $lbuffer ]]; then
+      pre='*'
+    else
+      pre=$no_delim
+    fi
+    if [[ -z $rbuffer ]]; then
+      post='*'
+    else
+      post=$no_delim
+    fi
+  fi
+  query="(|$pre)$query$post"
+
+  [[ $curcontext == *history-search-backward* ]] &&
+      zle -R 'Loading...'
+
+  local -P output="$( fc -lrm "$lbuffer$query$rbuffer" -1 1 2> /dev/null )"
+
+  # No results
+  [[ -n $output ]] ||
+      return
+
+  local -aU displays=( "${(f)output}" )
+
+  local -P numpat='[[:blank:]]#(<->)[*[:blank:]][[:blank:]]'
+  local -P groups="${(l:$(( 2 * $#words[CURRENT] ))::=0:):-}"
+  _comp_colors=(
+      "=(#b)${numpat}${lbuffer}(${query})${rbuffer}${rbuffer:+[[:blank:]]#}=2=2=0=0=30;103$groups"
+      "=(#b)${numpat}${lbuffer}(${query})*=2=2=0=30;103$groups"
+      "=(#b)${numpat}${lbuffer}(*)=2=2=0"
+      "=(#b)${numpat}*=0=2"
+      ${(M)_comp_colors:#ma=*}
+  )
+
+  local -Pi list_lines=0
+  if ! builtin zstyle -s ":autocomplete:${curcontext}:" list-lines list_lines; then
+    list_lines=16
+    [[ $curcontext == *history-search-* ]] &&
+        list_lines=$(( 16 * list_lines ))
+  fi
+  [[ $curcontext != *history-search-* ]] &&
+      list_lines=$(( min( list_lines, LINES - BUFFERLINES - 1 ) ))
+
+  if [[ -o histfindnodups ]]; then
+    local -PaU uniques=()
+    local -Pa lines=()
+    local -Pi i=0 size=0
+    for (( i = $#displays[@] ; i > 0 && size < list_lines ; i-- )); do
+      uniques+=( ${displays[i]##$~numpat} )
+      [[ $#uniques -gt $size ]] &&
+          lines+=( "$displays[i]" )
+      size=$#uniques
+    done
+    displays=( "${(aO)lines[@]}" )
+  else
+    [[ $#displays[@] -gt $list_lines ]] &&
+        shift $(( $#displays[@] - list_lines )) displays
+  fi
+
+  if [[ $curcontext != *history-search-* ]]; then
+    if [[ -z $words ]]; then
+      displays=( ${(@aO)displays} )
+    else
+      local -a match=() mbegin=() mend=()
+      local MATCH= MBEGIN= MEND=
+      displays=(
+          ${(@nO)displays[@]:/(#b)($~numpat$~lbuffer$~query*)/$((
+            match[2] - 2 * $#match[1] - 4 * mbegin[4] - 16 * $#match[4]
+          ))$'\0'$match[1]}
+      )
+      displays=( ${displays[@]#<->$'\0'} )
+    fi
+  fi
+
+  displays=( ${(@r:COLUMNS-1:)displays} )
+
+  local -Pa matches=()
+  local -Pi index=0
+  for index in "${(MS)displays[@]##<->}"; do
+    matches+=( "${${history[$index]##$~lbuffer}%%$~rbuffer}" )
+  done
+
+  local -Pa suf=()
+  local -a expl=()
+  local _comp_no_ignore=1
+  if [[ $#words[@] -eq $CURRENT && $WIDGETSTYLE == *-select* ]]; then
+    suf=( -S ';' -R _autocomplete.history_lines.suffix )
+  else
+    suf=( -qS ' ' )
+  fi
+
+  _comp_tags=history-lines
+  _description -2V $_comp_tags expl ''
+  builtin compadd $suf -QU -ld displays "$expl[@]" -a matches
+}
+
+_autocomplete.history_lines.suffix() {
+  [[ $KEYS[-1] != $'\C-@' ]] &&
+      LBUFFER=$LBUFFER[1,-1-$1]
+}
+
+_autocomplete.history_lines "$@"

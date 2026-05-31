@@ -1,0 +1,178 @@
+#  _ _____ _     _            _
+# (_)___ /| |__ | | ___   ___| | _____
+# | | |_ \| '_ \| |/ _ \ / __| |/ / __|
+# | |___) | |_) | | (_) | (__|   <\__ \
+# |_|____/|_.__/|_|\___/ \___|_|\_\___/
+
+full_text=|
+align=center
+separator=false
+color=#043969
+separator_block_width=6
+markup=pango
+
+[usb]
+color=#928374 # @gray
+command=lsblk | grep 'sda1' | awk '{ if ($6 == "part")  { print $7 } else {print ""} }'
+interval=2
+
+[separator]
+
+[cups]
+color=#928374 # @gray
+command=xset -q | grep Caps | awk '{ if ($4 == "on")  { print $2 } else {print ""} }'
+interval=2
+
+
+[separator]
+
+[num]
+color=#928374 # @gray
+command=xset -q | grep Caps | awk '{ if ($8 == "on")  { print $6 } else {print ""} }'
+interval=2
+
+[separator]
+
+[espacio-root]
+color=#7c6f64 # @icon
+full_text=
+command=ghostty --command="ncdu /"
+
+[root]
+color=#83a598 # @fg
+command=df -h / | awk 'FNR==2{print $4}'
+interval=3
+
+[separator]
+
+[espacio-home]
+color=#7c6f64 # @icon
+full_text=
+command=ghostty --command="ncdu /home/salva"
+
+[home]
+color=#83a598 # @fg
+command=df -h /home | awk 'FNR==2{print $4}'
+interval=3
+
+[separator]
+
+[htop]
+color=#7c6f64 # @icon
+full_text=
+command=ghostty --command="btop"
+
+[cpu_usage]
+color=#83a598 # @fg
+command=top -bn1 | grep "Cpu(s)" | awk '{print 100 - $8 "%"}'
+interval=3
+
+[separator]
+
+[top]
+color=#7c6f64 # @icon
+full_text=🏬
+command=ghostty --command="bpytop"
+
+[memory]
+color=#83a598 # @fg
+command=~/.config/i3blocks/memory/memory
+interval=30
+
+[separator]
+
+[temperature]
+color=#928374 # @gray
+command=~/.config/i3blocks/temperature/temperature
+label=<span color="#a2a1a1"> </span>
+interval=10
+
+[separator]
+
+[pulseaudio]
+color=#7c6f64 # @icon
+full_text=
+command=/home/salva/scripts/audioReboot.sh
+
+[volume]
+color=#83a598 # @fg
+instance=Master
+command=~/.config/i3blocks/volume/volume
+interval=once
+signal=2
+
+[separator]
+
+[speedtest]
+color=#7c6f64 # @icon
+full_text=
+command=ghostty --command="speedtest"
+
+[wifi]
+color=#928374 # @gray
+command=ssid=$(iwgetid -r) ; [[ $ssid == "" ]] && ssid="N/A"  ; echo $ssid 
+interval=5
+
+[separator]
+
+[google-calendar]
+color=#7c6f64 # @icon
+full_text=
+command=firefox https://calendar.google.com/calendar/u/0/r?tab=mc&pli=1
+
+[time]
+color=#ebdbb2 # @white
+command=date '+%A %e (%H:%M)'
+interval=1
+
+[separator]
+
+[updates]
+color=#83a598 # @fg
+full_text=
+command=ghostty --command="yay -Syu"
+
+[pacman-updates]
+color=#d79921 # @yellow
+command=checkupdates | wc -l | awk '{if ($1>0) {print $1 " up"} else {print ""}}'
+markup=pango
+interval= 3600
+
+[separator]
+
+[bateria]
+color=#928374 # @gray
+command=echo
+interval=30
+label=⚡
+
+[separator]
+
+[firefox]
+color=#cc241d # @red #rojo
+full_text=
+command=firefox 
+
+[separator]
+
+[monitors]
+color=#7c6f64 # @icon
+full_text=
+command=arandr 
+
+[separator]
+
+[power]
+color=#d79921 # @yellow
+full_text=
+command=ghostty --command="reboot"
+
+[separator]
+
+[power]
+color=#cc241d # @red #rojo
+full_text=
+command=ghostty --command="systemctl poweroff"
+
+[separator]
+

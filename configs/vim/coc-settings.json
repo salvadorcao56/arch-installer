@@ -1,0 +1,107 @@
+{
+  "suggest.noselect": false,
+  "suggest.preferCompleteThenFocusMenu": true,
+  "coc.preferences.formatOnSaveFiletypes": [
+    "java", "elixir", "python", "c", "cpp", "kotlin",
+    "typescript", "javascript", "json", "go", "rust",
+    "html", "scss", "css"
+  ],
+  "java": {
+    "home": "/home/salva/.config/coc/extensions/coc-java-data/jdk-23.0.2-linux-x64",
+    "configuration": {
+      "runtimes": []
+    },
+    "format": {
+      "enabled": true
+    },
+    "completion": {
+      "guessMethodArguments": true
+    },
+    "maven": {
+      "downloadSources": true
+    },
+    "referencesCodeLens": {
+      "enabled": false
+    },
+    "signatureHelp": {
+      "enabled": true
+    }
+  },
+  "elixir": {
+    "pathToElixirLS": ""
+  },
+  "pyright": {
+    "disableOrganizeImports": false,
+    "analysis": {
+      "autoSearchPaths": true,
+      "useLibraryCodeForTypes": true,
+      "diagnosticMode": "workspace",
+      "typeCheckingMode": "basic",
+      "stubPath": ""
+    }
+  },
+  "clangd": {
+    "arguments": ["--background-index", "--clang-tidy", "--completion-style=detailed"]
+  },
+  "go": {
+    "goplsPath": "/home/salva/go/bin/gopls",
+    "gopls": {
+      "usePlaceholders": true,
+      "completeUnimported": true,
+      "staticcheck": true,
+      "analyses": {
+        "unusedparams": true,
+        "unusedwrite": true
+      }
+    },
+    "gopath": ""
+  },
+  "rust-analyzer": {
+    "path": "/home/salva/.config/coc/extensions/coc-rust-analyzer-data/rust-analyzer",
+    "cargo": {
+      "allFeatures": true
+    },
+    "checkOnSave": {
+      "command": "clippy"
+    },
+    "completion": {
+      "postfix": {
+        "enable": true
+      }
+    },
+    "inlayHints": {
+      "typeHints": {
+        "enable": true
+      },
+      "parameterHints": {
+        "enable": true
+      },
+      "chainingHints": {
+        "enable": true
+      }
+    }
+  },
+  "tsserver": {
+    "formatOnSave": true,
+    "implicitProjectConfiguration": {
+      "checkJs": true
+    }
+  },
+  "angular": {
+    "provideStrictMode": true
+  },
+  "languageserver": {
+    "kotlin": {
+      "command": "kotlin-language-server",
+      "filetypes": ["kotlin"],
+      "rootPatterns": [".git/", "build.gradle.kts", "build.gradle", "pom.xml"],
+      "settings": {
+        "kotlin": {
+          "compiler": {
+            "classpath": []
+          }
+        }
+      }
+    }
+  }
+}

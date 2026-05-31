@@ -1,0 +1,27 @@
+# For the benefit of emacs users: -*- shell-script -*-
+#
+#  _ _____                    __ _
+# (_)___ /    ___ ___  _ __  / _(_) __ _
+# | | |_ \   / __/ _ \| '_ \| |_| |/ _` |
+# | |___) | | (_| (_) | | | |  _| | (_| |
+# |_|____/   \___\___/|_| |_|_| |_|\__, |
+#                                  |___/
+
+
+# Default modkey
+set $mod Mod4
+
+# files
+include ~/dotfiles/i3/config.d/variables.conf
+include ~/dotfiles/i3/config.d/appearance.conf
+include ~/dotfiles/i3/config.d/workspaces.conf
+include ~/dotfiles/i3/config.d/rules.conf
+include ~/dotfiles/i3/config.d/floating.conf
+include ~/dotfiles/i3/config.d/keybinds-apps.conf
+include ~/dotfiles/i3/config.d/keybinds-system.conf
+include ~/dotfiles/i3/config.d/keybinds-wm.conf
+include ~/dotfiles/i3/config.d/multimedia.conf
+include ~/dotfiles/i3/config.d/resize.conf
+include ~/dotfiles/i3/config.d/bar.conf
+include ~/dotfiles/i3/config.d/autostart.conf
+

@@ -9,6 +9,7 @@ source modules/system.sh
 source modules/user.sh
 source modules/desktop.sh
 source modules/packages.sh
+source modules/dotfiles.sh
 source modules/boot.sh
 source modules/security.sh
 source modules/snapshots.sh

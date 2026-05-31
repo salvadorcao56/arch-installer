@@ -1,0 +1,9 @@
+vim/plugged/
+vim/spell/
+vim/.metals/
+Code/
+neomutt/*_
+neomutt/*Copia
+node_modules/
+.cache/
+.local/

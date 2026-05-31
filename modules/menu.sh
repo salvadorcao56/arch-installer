@@ -25,6 +25,7 @@ run_install() {
     configure_initramfs
     create_user
     install_desktop
+    install_dotfiles
     select_packages
     install_aur_packages
     install_hacker_tools

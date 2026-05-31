@@ -1,0 +1,117 @@
+"" Map leader to/,
+let mapleader=','
+
+set encoding=utf-8
+set fileencoding=utf-8
+set fileencodings=utf-8
+set ttyfast
+
+"REMAPEO VIM
+:imap ii <Esc>
+:vmap ii <Esc>
+
+"" Tabs. May be overridden by autocmd rules
+set tabstop=4
+set softtabstop=0
+set shiftwidth=4
+set expandtab
+"" Searching
+set hlsearch
+set incsearch
+set ignorecase
+set smartcase
+set colorcolumn=80
+syntax on
+set ruler
+set number
+set relativenumber
+set mouse=a
+set autoindent
+set smartindent
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set showmatch
+set hlsearch
+set incsearch
+set ignorecase
+set autochdir
+set errorbells
+set visualbell
+setlocal spell spelllang=es
+filetype indent on
+syntax on
+set nocompatible
+set encoding=utf-8
+set splitbelow
+set splitright
+" Emulated Plugins
+set surround
+set NERDTree
+
+" Copy to system clipboard as well
+set clipboard+=unnamed
+
+" actions
+nmap <leader>tn :action tabnew<cr>
+nmap <leader>th <action>(PreviousTab)<cr>
+nmap <leader>tl <action>(NextTab)<cr>
+nmap <leader>tc :tabclose<cr>
+nmap <leader>to :tabonly<cr>
+nmap <leader>h :action PrevSplitter<cr>
+nmap <leader>l :action NextSplitter<cr>
+" nmap <leader>bd <action>(CloseEditor)
+" nmap <leader>i <action>(Generate)
+nmap <leader> gg <action>(Git.Menu)
+" Closing tabs
+nmap <leader>q :action CloseContent<cr>
+nmap <leader>Q :action ReopenClosedTab<cr>
+" Full screen window
+nmap <leader>f :action HideAllWindows<cr>
+
+" Splits manipulation
+nmap <leader>vh :action SplitHorizontally<cr>
+nmap <leader>vs :action SplitVertically<cr>
+nmap <leader>vc :action Unsplit<cr>
+nmap <leader>vC :action UnsplitAll<cr>
+nmap <leader>vd :action OpenEditorInOppositeTabGroup<cr>
+" nmap <leader><leader> :action VimFilePrevious<cr>
+" nmap <leader>, :action VimFilePrevious<cr>
+" nmap <leader>ww :action JumpToLastWindow<cr>
+
+" NERDTree
+"map <C-a> :NERDTreeFind<CR>
+map <C-a> :NERDTreeToggle<CR>
+
+" Terminal
+nmap <leader>t :action ActivateTerminalToolWindow<cr>
+
+nmap <leader>r :action Run<cr>
+nmap gcc :action CommentByLineComment<cr>
+vmap gc :action CommentByBlockComment<cr>
+
+
+" nmap <leader>s <action>(QuickChangeScheme)
+" nmap <leader>/ <action>(ShowErrorDescription)
+" nmap <leader>e <action>(GotoNextError)
+" nnoremap <leader><leader> <C-Tab>
+" nnoremap <silent> <C-A> :NERDTreeFind<CR>
+"nnoremap <C-n> <:NERDTree><CR>
+"nnoremap <C-a> <action> (Project)<CR>
+"nnoremap <C-a> <action> (Hide)<CR>
+"nnoremap <C-t> <action>(Terminal)
+" let g:NERDTreeMapActivateNode='l'
+" let g:NERDTreeMapJumpParent='h'''''"
+
+source ~/.vimrc
+
+" Actions
+nmap <leader>rn :action RenameElement<cr>
+map <Leader>g <Action>(Generate)
+map <Leader>r <Action>(ReformatFile)
+"map <Leader>r <Action>(Refactorings.QuickListPopupAction)
+nmap <leader>o :action OptimizeImports<cr>
+
+" Search
+nmap <leader>s :action Find<cr>
+nmap <leader>fs :action FindInPath<cr>

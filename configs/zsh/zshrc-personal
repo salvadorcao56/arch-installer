@@ -1,0 +1,38 @@
+# Use powerline
+USE_POWERLINE="true"
+# Has weird character width
+# Example:
+#    is not a diamond
+HAS_WIDECHARS="false"
+# Source manjaro-zsh-configuration
+if [[ -e /usr/share/zsh/manjaro-zsh-config ]]; then
+  source /usr/share/zsh/manjaro-zsh-config
+fi
+# Use manjaro zsh prompt
+if [[ -e /usr/share/zsh/manjaro-zsh-prompt ]]; then
+  source /usr/share/zsh/manjaro-zsh-prompt
+fi
+
+#source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+#source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh
+#source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+#source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
+#source /home/salva/.config/zsh/web-search.plugin.zsh
+source /home/salva/dotfiles/zsh/comandos.zsh
+source /home/salva/dotfiles/zsh/alias.zsh
+source /home/salva/dotfiles/zsh/plugins
+
+export LANG=es_ES.UTF-8
+export EDITOR=vim 
+eval "$(starship init zsh)"
+eval "$(zoxide init zsh)"
+export OLLAMA_API_BASE=http://127.0.0.1:11434
+export AIDER_MODEL=ollama/qwen2.5-coder:3b
+export PATH="$HOME/.cargo/bin:$HOME/bin:$PATH"
+
+# opencode
+export PATH=/home/salva/.opencode/bin:$PATH
+
+
+# Load Angular CLI autocompletion.
+source <(ng completion script)

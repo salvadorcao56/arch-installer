@@ -1,0 +1,63 @@
+conky.config = {
+
+	update_interval = 2.0,
+	total_run_times = 0,
+	net_avg_samples = 2,
+	cpu_avg_samples = 2,
+	double_buffer = true,
+	no_buffers = true,
+	use_xft = true,
+	font = 'Ubuntu:size=10',
+	override_utf8_locale = true,
+	default_color = '#cccccc',
+	color0 = 'darkgrey',
+	color1 = '#77507b',
+	color2 = 'white',
+	color3 = '#35805f',
+	color4 = '#4e4141',
+	own_window = true,
+	own_window_type = 'normal',
+	own_window_transparent = false,
+	own_window_hints = 'undecorated,below,sticky,skip_taskbar,skip_pager',
+	own_window_colour = '000000',
+	own_window_argb_visual = false,
+	own_window_argb_value = 153,
+	alignment = 'top_right',
+	gap_x = 40,
+	gap_y = 40,
+	minimum_width = 300, minimum_height = 555,
+	maximum_width = 300,
+	draw_shades = false,
+
+};
+conky.text = [[
+${image ~/.conky/System.png -p 0,0 -s 300x555}
+
+
+${goto 32}${color0}Kernel: ${goto 100}${color2}${kernel}${color}
+${image ~/.conky/logo.png -p 200,95 -s 55x55}
+${goto 32}${color0}CPU : ${color1}${goto 100}${cpu cpu0}%${color}
+${goto 32}${color0}Temp : ${color1}${goto 100}${hwmon acpitz temp 1} °C${color}
+${goto 32}${color0}Freq : ${color1}${goto 100}${freq_g cpu0} GHz
+
+${goto 32}${color0}RAM : ${color1}${goto 100}$memperc%${goto 205}${mem}
+${goto 32}${color0}Swap : ${goto 100}${color1}${swap}${color0}${color}
+
+${goto 32}${color0}System used :${goto 150}${color1}${fs_used /}${color}
+${goto 32}${color0}Backup used : ${goto 150}${color1}${fs_used /run/media/lunix/Backup/}
+
+${goto 32}${color0}SSD Temp : ${goto 150}${color1}${hddtemp /dev/sda}.0 °C
+
+${goto 32}${color0}Up: ${color1}${goto 100}${upspeed wlp3s0}${goto 205}${color2}${execi 30 vnstat -i wlp3s0 | grep "today" | awk '{print $5 $6}'}
+${goto 32}${color0}Down: ${color1}${goto 100}${downspeed wlp3s0}${goto 205}${color2}${execi 30 vnstat -i wlp3s0 | grep "today" | awk '{print $2 $3}'}
+
+${goto 32}${color0}WIFI: ${goto 100}${execpi 30 /home/lunix/.conky/conky_scripts/pingtest.sh 192.168.1.101}${color1}${goto 205}${wireless_link_qual_perc wlp3s0}%
+ 
+${goto 32}${color0}Local IP: ${goto 150}${color2}${addr wlp3s0}
+${goto 32}${color0}Public IP: ${goto 150}${color2}${execi 30 wget -q -O - checkip.dyndns.org | sed -e 's/[^[:digit:]\|.]//g'}
+
+${goto 32}${color0}Kabylake:${goto 150}${execpi 30 /home/lunix/.conky/conky_scripts/pingtest.sh 192.168.1.106}
+${goto 32}${color0}Nas:${goto 150}${execpi 30 /home/lunix/.conky/conky_scripts/pingtest.sh 192.168.1.102}
+${goto 32}${color0}Vero 4k+:${goto 150}${execpi 30 /home/lunix/.conky/conky_scripts/pingtest.sh 192.168.1.103}
+
+]];

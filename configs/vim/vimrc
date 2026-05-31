@@ -1,0 +1,11 @@
+""================MAPLEADER=========================
+let mapleader=','
+
+"=================SOURCES==========================="
+source /home/salva/.config/vim/keymaps.vim
+source /home/salva/.config/vim/plugins.vim
+source /home/salva/.config/vim/settings.vim
+source /home/salva/.config/vim/coc-config.vim
+" source /home/salva/.config/vim/plugged
+" source /home/salva/.config/vim/lsp-config.vim
+

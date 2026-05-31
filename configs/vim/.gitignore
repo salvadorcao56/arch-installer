@@ -1,0 +1,4 @@
+help
+spell/
+.metals/
+autoload/plug.vim.old
