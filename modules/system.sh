@@ -36,7 +36,7 @@ cat >> /etc/hosts <<HOSTS
 127.0.1.1   $HOSTNAME.localdomain $HOSTNAME
 HOSTS
 
-systemctl enable NetworkManager
+systemctl enable NetworkManager 2>/dev/null || true
 EOF
 }
 
@@ -44,12 +44,12 @@ configure_initramfs() {
     if [ -f /tmp/crypt_uuid ]; then
 arch-chroot /mnt /bin/bash <<EOF
 sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect modconf block keyboard keymap encrypt filesystems fsck)/' /etc/mkinitcpio.conf
-mkinitcpio -P
+mkinitcpio -P 2>/dev/null || true
 EOF
     else
 arch-chroot /mnt /bin/bash <<EOF
 sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect modconf block keyboard keymap filesystems fsck)/' /etc/mkinitcpio.conf
-mkinitcpio -P
+mkinitcpio -P 2>/dev/null || true
 EOF
     fi
 }

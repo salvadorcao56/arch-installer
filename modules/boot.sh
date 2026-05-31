@@ -13,7 +13,6 @@ echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
 EOF
     fi
 
-    mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars 2>/dev/null || true
-    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable
-    arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable || true
+    arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg || true
 }

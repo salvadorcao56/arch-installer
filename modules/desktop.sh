@@ -14,12 +14,12 @@ install_desktop() {
         i3)
             arch-chroot /mnt pacman -S i3-wm i3status i3lock dmenu picom feh alacritty i3blocks --noconfirm
             arch-chroot /mnt pacman -S lightdm lightdm-gtk-greeter --noconfirm
-            arch-chroot /mnt systemctl enable lightdm
+            arch-chroot /mnt systemctl enable lightdm 2>/dev/null || true
             arch-chroot /mnt systemctl set-default graphical.target
             ;;
         hyprland)
             arch-chroot /mnt pacman -S hyprland waybar alacritty wofi dunst --noconfirm
-            arch-chroot /mnt systemctl enable NetworkManager
+            arch-chroot /mnt systemctl enable NetworkManager 2>/dev/null || true
             mkdir -p /mnt/home/$(cat /tmp/username)/.config/hypr
             cat > /mnt/home/$(cat /tmp/username)/.config/hypr/hyprland.conf <<'HYPR'
 monitor=,preferred,auto,1
@@ -32,12 +32,12 @@ HYPR
             ;;
         xfce)
             arch-chroot /mnt pacman -S xfce4 xfce4-goodies lightdm lightdm-gtk-greeter --noconfirm
-            arch-chroot /mnt systemctl enable lightdm
+            arch-chroot /mnt systemctl enable lightdm 2>/dev/null || true
             arch-chroot /mnt systemctl set-default graphical.target
             ;;
         kde)
             arch-chroot /mnt pacman -S plasma sddm --noconfirm
-            arch-chroot /mnt systemctl enable sddm
+            arch-chroot /mnt systemctl enable sddm 2>/dev/null || true
             arch-chroot /mnt systemctl set-default graphical.target
             ;;
         none)

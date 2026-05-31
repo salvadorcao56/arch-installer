@@ -30,8 +30,8 @@ snapper -c root set-config TIMELINE_LIMIT_WEEKLY=0
 snapper -c root set-config TIMELINE_LIMIT_MONTHLY=0
 snapper -c root set-config TIMELINE_LIMIT_YEARLY=0
 
-systemctl enable --force snapper-timeline.timer
-systemctl enable --force snapper-cleanup.timer
+    systemctl enable --force snapper-timeline.timer 2>/dev/null || true
+    systemctl enable --force snapper-cleanup.timer 2>/dev/null || true
 
 echo "snapshot inicial" | snapper -c root create -d "Sistema recien instalado" -c timeline
 EOF
