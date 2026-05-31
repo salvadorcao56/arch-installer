@@ -1,2 +1,3 @@
 *.log
 configs/vim/plugged/
+__pycache__/
