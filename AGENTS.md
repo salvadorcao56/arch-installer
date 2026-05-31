@@ -62,7 +62,14 @@ arch-installer/
 - Hacking tools?
 - Snapper y GRUB
 
+## Script de prueba
+- create-test-vm.sh crea MV en QEMU+KVM (ya no VirtualBox)
+- Dependencias: qemu-system-x86_64 + edk2-ovmf
+- OVMF en /usr/share/edk2/x64/ (OVMF_CODE.4m.fd / OVMF_VARS.4m.fd)
+- Usa UEFI, disco qcow2, red NAT (slirp), display GTK
+
 ## Pendientes / Roadmap
+- [X] Migrar de VirtualBox a QEMU
 - [ ] Probar en MV
 - [ ] Perfiles predefinidos (minimal, dev, gaming)
 - [ ] Swapfile en BTRFS

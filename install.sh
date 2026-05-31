@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+loadkeys es
+
 source modules/log.sh
 source modules/menu.sh
 source modules/wifi.sh

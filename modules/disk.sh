@@ -15,13 +15,23 @@ to_mib() {
 }
 
 setup_disk() {
-    lsblk -d -o NAME,SIZE,MODEL | grep -v "^loop"
-    DISK=$(whiptail --inputbox "Disco a instalar (ej: sda, nvme0n1):" 10 60 3>&1 1>&2 2>&3)
+    DISKS=$(lsblk -d -o NAME,SIZE,MODEL | grep -v "^loop" | grep -v "^NAME" 2>/dev/null)
+    local DEFAULT_DISK=$(echo "$DISKS" | head -1 | awk '{print $1}')
+    DISK=$(whiptail --inputbox "Discos disponibles:
+
+$DISKS
+
+Escribe el nombre del disco donde instalar (ej: sda):" 18 70 "$DEFAULT_DISK" 3>&1 1>&2 2>&3)
     [[ -z "$DISK" ]] && exit 1
 
     DISK_PATH="/dev/$DISK"
     PART_PREFIX=""
     [[ "$DISK" == nvme* || "$DISK" == mmcblk* ]] && PART_PREFIX="p"
+
+    if ! parted -s "$DISK_PATH" unit MiB print >/dev/null 2>&1; then
+        whiptail --msgbox "ERROR: No se puede acceder a $DISK_PATH" 8 60
+        exit 1
+    fi
 
     USE_LUKS=$(whiptail --yesno "¿Usar cifrado LUKS?" 8 60 3>&1 1>&2 2>&3 && echo yes || echo no)
     FS_CHOICE=$(whiptail --menu "Sistema de archivos:" 10 60 2 \
@@ -29,58 +39,103 @@ setup_disk() {
         "ext4"  "Ext4" 3>&1 1>&2 2>&3)
     CUSTOM_PART=$(whiptail --yesno "¿Particionado manual? (NO = todo el disco para /)" 8 60 3>&1 1>&2 2>&3 && echo yes || echo no)
 
-    DISK_END=$(parted "$DISK_PATH" unit MiB print 2>/dev/null | awk '/^[0-9]/ && /^Disk/ {print $3}' | sed 's/MiB//')
+    DISK_END=$(parted -s "$DISK_PATH" unit MiB print 2>/dev/null | grep "Disk $DISK_PATH" | awk '{print $3}' | sed 's/MiB//')
     if [[ -z "$DISK_END" ]]; then
-        DISK_END=$(parted "$DISK_PATH" unit MiB print 2>/dev/null | grep "Disk $DISK_PATH" | awk '{print $3}' | sed 's/MiB//')
+        whiptail --msgbox "ERROR: No se pudo determinar el tamaño del disco" 8 60
+        exit 1
     fi
 
-    parted "$DISK_PATH" --script mklabel gpt
-    parted "$DISK_PATH" --script mkpart ESP fat32 1MiB 513MiB
-    parted "$DISK_PATH" --script set 1 esp on
+    parted -s "$DISK_PATH" mklabel gpt
+    parted -s "$DISK_PATH" mkpart ESP fat32 1MiB 513MiB
+    parted -s "$DISK_PATH" set 1 esp on
     EFI="${DISK_PATH}${PART_PREFIX}1"
 
     local START=513
     local PART_NUM=2
 
     if [[ "$CUSTOM_PART" == "yes" ]]; then
-        ROOT_SIZE=$(whiptail --inputbox "Tamaño partición ROOT (ej: 40G, o vacío = resto del disco):" 10 60 3>&1 1>&2 2>&3)
-        SWAP_SIZE=$(whiptail --inputbox "Tamaño SWAP (ej: 4G, o vacío = sin swap):" 10 60 3>&1 1>&2 2>&3)
-        HOME_SIZE=$(whiptail --inputbox "Tamaño HOME (ej: 100G, o vacío = resto del disco):" 10 60 3>&1 1>&2 2>&3)
+        local FREE=$((DISK_END - START))
+        local FREE_G=$((FREE / 1024))
+
+        ROOT_SIZE=$(whiptail --inputbox "Tamaño ROOT — Quedan ${FREE_G}G libres
+Ej: 40G, o vacío = resto del disco:" 11 65 3>&1 1>&2 2>&3)
 
         if [[ -n "$ROOT_SIZE" ]]; then
             local R_MIB=$(to_mib "$ROOT_SIZE")
+            local FREE=$((FREE - R_MIB))
+            local FREE_G=$((FREE / 1024))
+
+            SWAP_SIZE=$(whiptail --inputbox "Tamaño SWAP — Quedan ${FREE_G}G libres
+Ej: 4G, o vacío = sin swap:" 11 65 3>&1 1>&2 2>&3)
+
+            local S_MIB=0
+            if [[ -n "$SWAP_SIZE" ]]; then
+                S_MIB=$(to_mib "$SWAP_SIZE")
+                FREE=$((FREE - S_MIB))
+                FREE_G=$((FREE / 1024))
+            fi
+
+            HOME_SIZE=$(whiptail --inputbox "Tamaño HOME — Quedan ${FREE_G}G libres
+Ej: 100G, o vacío = resto del disco:" 11 65 3>&1 1>&2 2>&3)
+
+            local H_MIB=0
+            if [[ -n "$HOME_SIZE" ]]; then
+                H_MIB=$(to_mib "$HOME_SIZE")
+                FREE=$((FREE - H_MIB))
+            fi
+
             local END=$((START + R_MIB))
-            parted "$DISK_PATH" --script mkpart primary ${START}MiB ${END}MiB
+
+            SUMMARY="Particiones a crear en $DISK_PATH:\n\n"
+            SUMMARY+="  ESP:   1MiB - 513MiB\n"
+            SUMMARY+="  ROOT:  513MiB - ${END}MiB (${ROOT_SIZE}B)\n"
+            if [[ -n "$SWAP_SIZE" ]]; then
+                SUMMARY+="  SWAP:  ${END}MiB - $((END + S_MIB))MiB (${SWAP_SIZE}B)\n"
+            fi
+            if [[ -n "$HOME_SIZE" ]]; then
+                SUMMARY+="  HOME:  $((END + S_MIB))MiB - $((END + S_MIB + H_MIB))MiB (${HOME_SIZE}B)\n"
+            fi
+            SUMMARY+="\n¿Continuar? Se borrará TODO el contenido del disco"
+
+            whiptail --yesno "$SUMMARY" 18 70 3>&1 1>&2 2>&3 || exit 1
+
+            parted -s "$DISK_PATH" mkpart primary ${START}MiB ${END}MiB
             ROOT_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
             START=$END
             ((PART_NUM++))
+
+            if [[ -n "$SWAP_SIZE" ]]; then
+                local END=$((START + S_MIB))
+                parted -s "$DISK_PATH" mkpart primary linux-swap ${START}MiB ${END}MiB
+                SWAP_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
+                START=$END
+                ((PART_NUM++))
+            fi
+
+            if [[ -n "$HOME_SIZE" ]]; then
+                local END=$((START + H_MIB))
+                parted -s "$DISK_PATH" mkpart primary ${START}MiB ${END}MiB
+                HOME_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
+                START=$END
+                ((PART_NUM++))
+            fi
+
+            if [[ $FREE -gt 100 ]]; then
+                whiptail --yesno "Quedan $((FREE / 1024))G sin particionar. ¿Asignarlos al final del disco?" 10 60
+                if [[ $? -eq 0 ]]; then
+                    parted -s "$DISK_PATH" mkpart primary ${START}MiB 100%
+                    HOME_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
+                    ((PART_NUM++))
+                fi
+            fi
         else
-            parted "$DISK_PATH" --script mkpart primary ${START}MiB 100%
+            parted -s "$DISK_PATH" mkpart primary ${START}MiB 100%
             ROOT_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
-            ((PART_NUM++))
             HOME_SIZE=""
             SWAP_SIZE=""
         fi
-
-        if [[ -n "$SWAP_SIZE" && -n "$ROOT_SIZE" ]]; then
-            local S_MIB=$(to_mib "$SWAP_SIZE")
-            local END=$((START + S_MIB))
-            parted "$DISK_PATH" --script mkpart primary linux-swap ${START}MiB ${END}MiB
-            SWAP_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
-            START=$END
-            ((PART_NUM++))
-        fi
-
-        if [[ -n "$HOME_SIZE" && -n "$ROOT_SIZE" ]]; then
-            local H_MIB=$(to_mib "$HOME_SIZE")
-            local END=$((START + H_MIB))
-            parted "$DISK_PATH" --script mkpart primary ${START}MiB ${END}MiB
-            HOME_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
-            START=$END
-            ((PART_NUM++))
-        fi
     else
-        parted "$DISK_PATH" --script mkpart primary ${START}MiB 100%
+        parted -s "$DISK_PATH" mkpart primary ${START}MiB 100%
         ROOT_PART="${DISK_PATH}${PART_PREFIX}${PART_NUM}"
     fi
 

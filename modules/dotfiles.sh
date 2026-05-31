@@ -3,92 +3,75 @@
 # =========================
 
 install_dotfiles() {
-    local USER=$(cat /tmp/username)
+    local USER
+    USER=$(cat /tmp/username 2>/dev/null || echo "")
+    if [[ -z "$USER" ]]; then
+        whiptail --msgbox "ERROR: No se encuentra /tmp/username. ¿Se creó el usuario?" 8 60
+        exit 1
+    fi
     local HOME_DIR="/mnt/home/$USER"
+    local DOTFILES_DST="$HOME_DIR/dotfiles"
 
     local SCRIPT_DIR
     SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-    local DOTFILES_DIR="$SCRIPT_DIR/configs"
+    local DOTFILES_SRC="$SCRIPT_DIR/configs"
 
-    if [ ! -d "$DOTFILES_DIR/i3" ] && [ ! -d "$DOTFILES_DIR/zsh" ]; then
+    if [ ! -d "$DOTFILES_SRC/i3" ] && [ ! -d "$DOTFILES_SRC/zsh" ]; then
         return
     fi
 
-    USE_DOTFILES=$(whiptail --yesno "¿Copiar configuraciones (dotfiles) al sistema nuevo?\n\nIncluye: i3, i3blocks, zsh, nvim, vim, ranger, ghostty, thunar, yazi" 12 65 3>&1 1>&2 2>&3 && echo yes || echo no)
+    USE_DOTFILES=$(whiptail --yesno "Copiar configuraciones (dotfiles) al sistema nuevo?
+
+Incluye: i3, i3blocks, zsh, nvim, vim, ranger, ghostty, thunar, yazi" 12 65 3>&1 1>&2 2>&3 && echo yes || echo no)
     [[ "$USE_DOTFILES" != "yes" ]] && return
 
-    mkdir -p "$HOME_DIR/.config"
+    whiptail --msgbox "Se copiarán las configuraciones a ~/dotfiles/
+y se crearán enlaces simbólicos." 10 60
 
-    # i3
-    if [ -d "$DOTFILES_DIR/i3" ]; then
-        mkdir -p "$HOME_DIR/.config/i3"
-        cp -r "$DOTFILES_DIR/i3/"* "$HOME_DIR/.config/i3/"
-    fi
+    mkdir -p "$DOTFILES_DST" 2>/dev/null || true
 
-    # i3blocks
-    if [ -d "$DOTFILES_DIR/i3blocks" ]; then
-        mkdir -p "$HOME_DIR/.config/i3blocks"
-        cp -r "$DOTFILES_DIR/i3blocks/"* "$HOME_DIR/.config/i3blocks/"
-    fi
+    copy_to_dotfiles() {
+        local src="$1"
+        if [ -e "$src" ]; then
+            cp -r "$src" "$DOTFILES_DST/" 2>/dev/null || true
+        fi
+    }
 
-    # zsh
-    if [ -d "$DOTFILES_DIR/zsh" ]; then
-        cp "$DOTFILES_DIR/zsh/zshrc" "$HOME_DIR/.zshrc" 2>/dev/null
-        cp "$DOTFILES_DIR/zsh/zshrc-personal" "$HOME_DIR/.zshrc-personal" 2>/dev/null
-        cp "$DOTFILES_DIR/zsh/alias.zsh" "$HOME_DIR/.alias.zsh" 2>/dev/null
-        cp "$DOTFILES_DIR/zsh/comandos.zsh" "$HOME_DIR/.comandos.zsh" 2>/dev/null
-        cp "$DOTFILES_DIR/zsh/p10k.zsh" "$HOME_DIR/.p10k.zsh" 2>/dev/null
-        mkdir -p "$HOME_DIR/.zsh"
-        cp -r "$DOTFILES_DIR/zsh/plugins" "$HOME_DIR/.zsh/plugins" 2>/dev/null
-        cp -r "$DOTFILES_DIR/zsh/zsh-vi-mode" "$HOME_DIR/.zsh/zsh-vi-mode" 2>/dev/null
-        cp "$DOTFILES_DIR/zsh/web-search.plugin.zsh" "$HOME_DIR/.zsh/" 2>/dev/null
-    fi
+    symlink_dir() {
+        local target="$1" link="$2"
+        mkdir -p "$(dirname "$link")" 2>/dev/null || true
+        rm -rf "$link" 2>/dev/null || true
+        ln -sf "$target" "$link" 2>/dev/null || true
+    }
 
-    # nvim
-    if [ -d "$DOTFILES_DIR/nvim" ]; then
-        mkdir -p "$HOME_DIR/.config/nvim"
-        cp -r "$DOTFILES_DIR/nvim/"* "$HOME_DIR/.config/nvim/"
-    fi
+    symlink_file() {
+        local target="$1" link="$2"
+        mkdir -p "$(dirname "$link")" 2>/dev/null || true
+        rm -f "$link" 2>/dev/null || true
+        ln -sf "$target" "$link" 2>/dev/null || true
+    }
 
-    # vim
-    if [ -d "$DOTFILES_DIR/vim" ]; then
-        cp -r "$DOTFILES_DIR/vim" "$HOME_DIR/.vim"
-    fi
+    for item in "$DOTFILES_SRC"/*; do
+        [ -e "$item" ] && copy_to_dotfiles "$item"
+    done
+    for item in "$DOTFILES_SRC"/.[!.]*; do
+        [ -e "$item" ] && copy_to_dotfiles "$item"
+    done
 
-    # ranger
-    if [ -d "$DOTFILES_DIR/ranger" ]; then
-        mkdir -p "$HOME_DIR/.config/ranger"
-        cp -r "$DOTFILES_DIR/ranger/"* "$HOME_DIR/.config/ranger/"
-    fi
+    symlink_dir "$DOTFILES_DST/i3" "$HOME_DIR/.config/i3"
+    symlink_dir "$DOTFILES_DST/i3blocks" "$HOME_DIR/.config/i3blocks"
+    symlink_dir "$DOTFILES_DST/ghostty" "$HOME_DIR/.config/ghostty"
+    symlink_dir "$DOTFILES_DST/nvim" "$HOME_DIR/.config/nvim"
+    symlink_dir "$DOTFILES_DST/ranger" "$HOME_DIR/.config/ranger"
+    symlink_dir "$DOTFILES_DST/yazi" "$HOME_DIR/.config/yazi"
+    symlink_dir "$DOTFILES_DST/thunar" "$HOME_DIR/.config/Thunar"
+    symlink_dir "$DOTFILES_DST/vim" "$HOME_DIR/.vim"
 
-    # ghostty
-    if [ -d "$DOTFILES_DIR/ghostty" ]; then
-        mkdir -p "$HOME_DIR/.config/ghostty"
-        cp -r "$DOTFILES_DIR/ghostty/"* "$HOME_DIR/.config/ghostty/"
-    fi
+    symlink_file "$DOTFILES_DST/zsh/zshrc-personal" "$HOME_DIR/.zshrc"
+    symlink_file "$DOTFILES_DST/nanorc" "$HOME_DIR/.nanorc"
+    symlink_file "$DOTFILES_DST/ideavimrc" "$HOME_DIR/.ideavimrc"
 
-    # thunar
-    if [ -d "$DOTFILES_DIR/thunar" ]; then
-        mkdir -p "$HOME_DIR/.config/Thunar"
-        cp -r "$DOTFILES_DIR/thunar/"* "$HOME_DIR/.config/Thunar/"
-    fi
+    arch-chroot /mnt chown -R "$USER:$USER" "$DOTFILES_DST" 2>/dev/null || true
 
-    # yazi
-    if [ -d "$DOTFILES_DIR/yazi" ]; then
-        mkdir -p "$HOME_DIR/.config/yazi"
-        cp -r "$DOTFILES_DIR/yazi/"* "$HOME_DIR/.config/yazi/"
-    fi
-
-    # nanorc
-    [ -f "$DOTFILES_DIR/nanorc" ] && cp "$DOTFILES_DIR/nanorc" "$HOME_DIR/.nanorc"
-
-    # ideavimrc
-    [ -f "$DOTFILES_DIR/ideavimrc" ] && cp "$DOTFILES_DIR/ideavimrc" "$HOME_DIR/.ideavimrc"
-
-    # gitignore
-    [ -f "$DOTFILES_DIR/gitignore" ] && cp "$DOTFILES_DIR/gitignore" "$HOME_DIR/.gitignore"
-
-    arch-chroot /mnt chown -R $USER:$USER "/home/$USER"
-
-    whiptail --msgbox "Dotfiles copiados correctamente" 8 60
+    whiptail --msgbox "Dotfiles copiados a ~/dotfiles/ con enlaces simbólicos" 8 60
 }
