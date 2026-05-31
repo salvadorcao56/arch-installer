@@ -15,7 +15,7 @@ install_desktop() {
             arch-chroot /mnt pacman -S i3-wm i3status i3lock dmenu picom feh alacritty i3blocks --noconfirm
             arch-chroot /mnt pacman -S lightdm lightdm-gtk-greeter --noconfirm
             arch-chroot /mnt systemctl enable lightdm 2>/dev/null || true
-            arch-chroot /mnt systemctl set-default graphical.target
+            arch-chroot /mnt systemctl set-default graphical.target 2>/dev/null || true
             ;;
         hyprland)
             arch-chroot /mnt pacman -S hyprland waybar alacritty wofi dunst --noconfirm
@@ -33,12 +33,12 @@ HYPR
         xfce)
             arch-chroot /mnt pacman -S xfce4 xfce4-goodies lightdm lightdm-gtk-greeter --noconfirm
             arch-chroot /mnt systemctl enable lightdm 2>/dev/null || true
-            arch-chroot /mnt systemctl set-default graphical.target
+            arch-chroot /mnt systemctl set-default graphical.target 2>/dev/null || true
             ;;
         kde)
             arch-chroot /mnt pacman -S plasma sddm --noconfirm
             arch-chroot /mnt systemctl enable sddm 2>/dev/null || true
-            arch-chroot /mnt systemctl set-default graphical.target
+            arch-chroot /mnt systemctl set-default graphical.target 2>/dev/null || true
             ;;
         none)
             return ;;
