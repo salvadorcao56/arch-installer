@@ -25,8 +25,8 @@ def whiptail(title, text, inputbox=False, yesno=False, menu=False, menu_items=No
         a += ['--menu', text, str(height), str(width), str(len(menu_items))] + [x for pair in menu_items for x in pair]
     elif checklist and checklist_items:
         a += ['--checklist', text, str(height), str(width), str(len(checklist_items))] + [x for pair in checklist_items for x in pair]
-    r = subprocess.run(a, capture_output=True, text=True)
-    return r.returncode == 0, r.stdout.strip()
+    r = subprocess.run(a + ['--output-fd', '1'], stdout=subprocess.PIPE, text=True)
+    return r.returncode == 0, r.stdout.strip() if r.stdout else ''
 
 def inp(t, d=''): return whiptail(t, t, inputbox=True)[1] or d
 def yes(t): return whiptail(t, t, yesno=True)[0]
