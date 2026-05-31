@@ -28,8 +28,8 @@ Escribe el nombre del disco donde instalar (ej: sda):" 18 70 "$DEFAULT_DISK" 3>&
     PART_PREFIX=""
     [[ "$DISK" == nvme* || "$DISK" == mmcblk* ]] && PART_PREFIX="p"
 
-    if ! parted -s "$DISK_PATH" unit MiB print >/dev/null 2>&1; then
-        whiptail --msgbox "ERROR: No se puede acceder a $DISK_PATH" 8 60
+    if [ ! -b "$DISK_PATH" ]; then
+        whiptail --msgbox "ERROR: $DISK_PATH no existe" 8 60
         exit 1
     fi
 
